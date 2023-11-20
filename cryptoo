@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Cryptarithmetic Puzzle Game</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Cryptarithmetic Puzzle Game</h1>
+        <div id="puzzle-container"></div>
+        <div id="assignment-container"></div>
+        <button onclick="solvePuzzle()">Solve Puzzle</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #f0f0f0;
+}
+
+.container {
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+}
+
+#puzzle-container {
+    margin: 20px 0;
+}
+
+#assignment-container {
+    margin-top: 20px;
+}
+document.addEventListener('DOMContentLoaded', function () {
+    const puzzleContainer = document.getElementById('puzzle-container');
+    const assignmentContainer = document.getElementById('assignment-container');
+
+    const puzzle = "SEND + MORE = MONEY";
+    const variables = Array.from(new Set(puzzle.match(/[A-Z]/g)));
+    const assignments = Object.fromEntries(variables.map(variable => [variable, null]));
+
+    displayPuzzle(puzzleContainer, puzzle);
+    displayAssignments(assignmentContainer, assignments);
+});
+
+function displayPuzzle(container, puzzle) {
+    container.innerHTML = `<p>${puzzle}</p>`;
+}
+
+function displayAssignments(container, assignments) {
+    container.innerHTML = "<p>Assignments:</p>";
+    for (const [variable, digit] of Object.entries(assignments)) {
+        const assignmentStr = `${variable}: ${digit !== null ? digit : '_'}`;
+        container.innerHTML += `<p>${assignmentStr}</p>`;
+    }
+}
+
+function solvePuzzle() {
+    // Send puzzle and current assignments to the server for solving
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/solve', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+
+    const puzzle = "SEND + MORE = MONEY";
+    const variables = Array.from(new Set(puzzle.match(/[A-Z]/g)));
+    const assignments = Object.fromEntries(variables.map(variable => [variable, null]));
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            const solvedAssignments = JSON.parse(xhr.responseText);
+            displayAssignments(document.getElementById('assignment-container'), solvedAssignments);
+        }
+    };
+
+    xhr.send(JSON.stringify({ puzzle, assignments }));
+}
+
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+
+def solve_puzzle(puzzle, assignments):
+    # Implement your puzzle-solving logic here (e.g., backtracking algorithm)
+    # Update the assignments dictionary with the solved values
+    # For this example, we'll return a dummy solution
+    return {variable: digit for variable, digit in zip(assignments.keys(), range(1, 10))}
+
+@app.route('/solve', methods=['POST'])
+def solve():
+    data = request.get_json()
+    puzzle = data['puzzle']
+    assignments = data['assignments']
+    solved_assignments = solve_puzzle(puzzle, assignments)
+    return jsonify(solved_assignments)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
